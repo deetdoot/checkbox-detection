@@ -2,6 +2,9 @@
 
 A complete web application for detecting and analyzing checkboxes in document images using Ollama and the granite3.2-vision:2b model.
 
+![alt text](image.png)
+
+
 ## Features
 
 - 🔍 **Checkbox Detection**: Automatically detect checked and unchecked boxes in document images
