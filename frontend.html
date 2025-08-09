@@ -1,0 +1,566 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Checkbox Detection - Document Analyzer</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 15px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+            overflow: hidden;
+        }
+
+        .header {
+            background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+            color: white;
+            padding: 30px;
+            text-align: center;
+        }
+
+        .header h1 {
+            font-size: 2.5em;
+            margin-bottom: 10px;
+        }
+
+        .header p {
+            font-size: 1.1em;
+            opacity: 0.9;
+        }
+
+        .main-content {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 30px;
+            padding: 30px;
+        }
+
+        .upload-section {
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+        }
+
+        .upload-area {
+            border: 3px dashed #4facfe;
+            border-radius: 15px;
+            padding: 40px;
+            text-align: center;
+            background: #f8f9ff;
+            transition: all 0.3s ease;
+            cursor: pointer;
+        }
+
+        .upload-area:hover {
+            border-color: #00f2fe;
+            background: #f0f4ff;
+        }
+
+        .upload-area.dragover {
+            border-color: #00f2fe;
+            background: #e6f3ff;
+            transform: scale(1.02);
+        }
+
+        .upload-icon {
+            font-size: 3em;
+            color: #4facfe;
+            margin-bottom: 15px;
+        }
+
+        .upload-text {
+            font-size: 1.2em;
+            color: #666;
+            margin-bottom: 15px;
+        }
+
+        .file-input {
+            display: none;
+        }
+
+        .upload-button {
+            background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+            color: white;
+            border: none;
+            padding: 12px 30px;
+            border-radius: 25px;
+            font-size: 1em;
+            cursor: pointer;
+            transition: transform 0.2s ease;
+        }
+
+        .upload-button:hover {
+            transform: translateY(-2px);
+        }
+
+        .url-section {
+            margin-top: 20px;
+            padding: 20px;
+            background: #f8f9ff;
+            border-radius: 10px;
+        }
+
+        .url-input {
+            width: 100%;
+            padding: 12px;
+            border: 2px solid #e0e0e0;
+            border-radius: 8px;
+            font-size: 1em;
+            margin-bottom: 10px;
+        }
+
+        .url-input:focus {
+            border-color: #4facfe;
+            outline: none;
+        }
+
+        .analyze-button {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            padding: 12px 25px;
+            border-radius: 25px;
+            font-size: 1em;
+            cursor: pointer;
+            transition: transform 0.2s ease;
+        }
+
+        .analyze-button:hover {
+            transform: translateY(-2px);
+        }
+
+        .analyze-button:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+        }
+
+        .results-section {
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+        }
+
+        .status-indicator {
+            position: fixed;
+            top: 10px;
+            right: 10px;
+            padding: 5px 10px;
+            border-radius: 5px;
+            text-align: center;
+            font-size: 0.8em;
+            font-weight: normal;
+            z-index: 1000;
+        }
+
+        .status-healthy {
+            background: rgba(212, 237, 218, 0.9);
+            color: #155724;
+            border: 1px solid #c3e6cb;
+        }
+
+        .status-error {
+            background: rgba(248, 215, 218, 0.9);
+            color: #721c24;
+            border: 1px solid #f5c6cb;
+        }
+
+        .status-loading {
+            background: rgba(209, 236, 241, 0.9);
+            color: #0c5460;
+            border: 1px solid #bee5eb;
+        }
+
+        .image-preview {
+            max-width: 100%;
+            border-radius: 10px;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+        }
+
+        .results-container {
+            background: #f8f9ff;
+            border-radius: 10px;
+            padding: 20px;
+            max-height: 500px;
+            overflow-y: auto;
+        }
+
+        .checkbox-group {
+            margin-bottom: 20px;
+            padding: 15px;
+            background: white;
+            border-radius: 8px;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+        }
+
+        .checkbox-group h3 {
+            color: #4facfe;
+            margin-bottom: 10px;
+            font-size: 1.1em;
+        }
+
+        .checkbox-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 8px 0;
+            border-bottom: 1px solid #eee;
+        }
+
+        .checkbox-item:last-child {
+            border-bottom: none;
+        }
+
+        .checkbox-label {
+            font-weight: 500;
+            color: #333;
+        }
+
+        .checkbox-status {
+            padding: 4px 12px;
+            border-radius: 15px;
+            font-size: 0.9em;
+            font-weight: bold;
+        }
+
+        .status-checked {
+            background: #d4edda;
+            color: #155724;
+        }
+
+        .status-unchecked {
+            background: #f8d7da;
+            color: #721c24;
+        }
+
+        .loading-spinner {
+            display: inline-block;
+            width: 20px;
+            height: 20px;
+            border: 3px solid #f3f3f3;
+            border-top: 3px solid #4facfe;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .error-message {
+            background: #f8d7da;
+            color: #721c24;
+            padding: 15px;
+            border-radius: 8px;
+            margin: 10px 0;
+        }
+
+        @media (max-width: 768px) {
+            .main-content {
+                grid-template-columns: 1fr;
+                gap: 20px;
+            }
+            
+            .header h1 {
+                font-size: 2em;
+            }
+            
+            .upload-area {
+                padding: 30px 20px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div id="statusIndicator" class="status-indicator status-loading">
+        <span class="loading-spinner"></span> Checking API...
+    </div>
+    <div class="container">
+        <div class="header">
+            <h1>📋 Checkbox Detection</h1>
+            <p>Upload a document image to automatically detect and analyze checkboxes</p>
+        </div>
+
+        <div class="main-content">
+            <div class="upload-section">
+                <div class="upload-area" id="uploadArea">
+                    <div class="upload-icon">📁</div>
+                    <div class="upload-text">Drag & drop an image here</div>
+                    <div>or</div>
+                    <button class="upload-button" onclick="document.getElementById('fileInput').click()">
+                        Choose File
+                    </button>
+                    <input type="file" id="fileInput" class="file-input" accept="image/*" onchange="handleFileSelect(event)">
+                </div>
+
+                <div class="url-section">
+                    <h3>Or analyze from URL:</h3>
+                    <input type="url" id="urlInput" class="url-input" placeholder="Enter image URL...">
+                    <button class="analyze-button" onclick="analyzeFromURL()">Analyze URL</button>
+                </div>
+
+            </div>
+
+            <div class="results-section">
+                <div id="imagePreview" style="display: none;">
+                    <h3>Image Preview:</h3>
+                    <img id="previewImage" class="image-preview" alt="Uploaded image">
+                </div>
+
+                <div id="resultsContainer" class="results-container" style="display: none;">
+                    <h3>Checkbox Analysis Results:</h3>
+                    <div id="resultsContent"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const API_BASE_URL = 'http://localhost:8000';
+        let isAnalyzing = false;
+
+        // Check API health on page load
+        window.addEventListener('load', checkAPIHealth);
+
+        // Drag and drop functionality
+        const uploadArea = document.getElementById('uploadArea');
+        
+        uploadArea.addEventListener('dragover', (e) => {
+            e.preventDefault();
+            uploadArea.classList.add('dragover');
+        });
+
+        uploadArea.addEventListener('dragleave', () => {
+            uploadArea.classList.remove('dragover');
+        });
+
+        uploadArea.addEventListener('drop', (e) => {
+            e.preventDefault();
+            uploadArea.classList.remove('dragover');
+            
+            const files = e.dataTransfer.files;
+            if (files.length > 0) {
+                handleFileUpload(files[0]);
+            }
+        });
+
+        async function checkAPIHealth() {
+            try {
+                const response = await fetch(`${API_BASE_URL}/health`, {
+                    method: 'GET',
+                    headers: {
+                        'Accept': 'application/json',
+                    }
+                });
+                const response_data = await response.json();
+                console.log(response_data); // Log the response for debugging
+                const statusIndicator = document.getElementById('statusIndicator');
+                if (response_data.data.status === 'healthy') {
+                    statusIndicator.className = 'status-indicator status-healthy';
+                    statusIndicator.innerHTML = '✅ API is healthy and ready';
+                } else {
+                    statusIndicator.className = 'status-indicator status-error';
+                    statusIndicator.innerHTML = '❌ API is not healthy';
+                }
+            } catch (error) {
+                const statusIndicator = document.getElementById('statusIndicator');
+                statusIndicator.className = 'status-indicator status-error';
+                statusIndicator.innerHTML = '❌ Cannot connect to API. Make sure the server is running.';
+            }
+        }
+
+        function handleFileSelect(event) {
+            const file = event.target.files[0];
+            if (file) {
+                handleFileUpload(file);
+            }
+        }
+
+        function handleFileUpload(file) {
+            if (!file.type.startsWith('image/')) {
+                showError('Please select an image file.');
+                return;
+            }
+
+            // Show image preview
+            const reader = new FileReader();
+            reader.onload = (e) => {
+                const previewImage = document.getElementById('previewImage');
+                previewImage.src = e.target.result;
+                document.getElementById('imagePreview').style.display = 'block';
+            };
+            reader.readAsDataURL(file);
+
+            // Upload and analyze
+            analyzeFile(file);
+        }
+
+        async function analyzeFile(file) {
+            if (isAnalyzing) return;
+            
+            setAnalyzing(true);
+            hideError();
+
+            try {
+            const formData = new FormData();
+            formData.append('file', file);
+
+            const response = await fetch(`${API_BASE_URL}/analyze-checkboxes`, {
+                method: 'POST',
+                body: formData
+            });
+
+            if (!response.ok) {
+                throw new Error(`HTTP error! status: ${response.status}`);
+            }
+
+            const result = await response.json();
+            // Use result.data for analysis
+            displayResults({
+                success: true,
+                checkbox_analysis: result.data.checkbox_analysis
+            });
+            } catch (error) {
+            showError(`Error analyzing image: ${error.message}`);
+            } finally {
+            setAnalyzing(false);
+            }
+        }
+
+        async function analyzeFromURL() {
+            const urlInput = document.getElementById('urlInput');
+            const imageUrl = urlInput.value.trim();
+            
+            if (!imageUrl) {
+            showError('Please enter an image URL.');
+            return;
+            }
+
+            if (isAnalyzing) return;
+            
+            setAnalyzing(true);
+            hideError();
+
+            try {
+            const response = await fetch(`${API_BASE_URL}/analyze-checkboxes-url?image_url=${encodeURIComponent(imageUrl)}`, {
+                method: 'POST'
+            });
+
+            if (!response.ok) {
+                throw new Error(`HTTP error! status: ${response.status}`);
+            }
+
+            const result = await response.json();
+            
+            // Show image preview
+            const previewImage = document.getElementById('previewImage');
+            previewImage.src = imageUrl;
+            document.getElementById('imagePreview').style.display = 'block';
+            
+            // Use result.data for analysis
+            displayResults({
+                success: true,
+                checkbox_analysis: result.data.checkbox_analysis
+            });
+            } catch (error) {
+            showError(`Error analyzing image from URL: ${error.message}`);
+            } finally {
+            setAnalyzing(false);
+            }
+        }
+
+        function displayResults(data) {
+            const resultsContainer = document.getElementById('resultsContainer');
+            const resultsContent = document.getElementById('resultsContent');
+            
+            if (!data.success) {
+                showError('Analysis failed');
+                return;
+            }
+
+            let html = '';
+            const checkboxes = data.checkbox_analysis;
+
+            for (const [key, value] of Object.entries(checkboxes)) {
+                if (typeof value === 'object' && value !== null) {
+                    // Grouped checkboxes
+                    html += `
+                        <div class="checkbox-group">
+                            <h3>${key}</h3>
+                            ${Object.entries(value).map(([subKey, subValue]) => `
+                                <div class="checkbox-item">
+                                    <span class="checkbox-label">${subKey}</span>
+                                    <span class="checkbox-status ${subValue === 'Checked' ? 'status-checked' : 'status-unchecked'}">
+                                        ${subValue}
+                                    </span>
+                                </div>
+                            `).join('')}
+                        </div>
+                    `;
+                } else {
+                    // Single checkbox
+                    html += `
+                        <div class="checkbox-group">
+                            <div class="checkbox-item">
+                                <span class="checkbox-label">${key}</span>
+                                <span class="checkbox-status ${value === 'Checked' ? 'status-checked' : 'status-unchecked'}">
+                                    ${value}
+                                </span>
+                            </div>
+                        </div>
+                    `;
+                }
+            }
+
+            resultsContent.innerHTML = html;
+            resultsContainer.style.display = 'block';
+        }
+
+        function setAnalyzing(analyzing) {
+            isAnalyzing = analyzing;
+            const analyzeButton = document.querySelector('.analyze-button');
+            
+            if (analyzing) {
+                analyzeButton.disabled = true;
+                analyzeButton.innerHTML = '<span class="loading-spinner"></span> Analyzing...';
+            } else {
+                analyzeButton.disabled = false;
+                analyzeButton.innerHTML = 'Analyze URL';
+            }
+        }
+
+        function showError(message) {
+            hideError();
+            const errorDiv = document.createElement('div');
+            errorDiv.className = 'error-message';
+            errorDiv.textContent = message;
+            
+            const resultsSection = document.querySelector('.results-section');
+            resultsSection.insertBefore(errorDiv, resultsSection.firstChild);
+        }
+
+        function hideError() {
+            const existingError = document.querySelector('.error-message');
+            if (existingError) {
+                existingError.remove();
+            }
+        }
+    </script>
+</body>
+</html>
