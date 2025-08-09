@@ -1,5 +1,7 @@
-# Checkbox Detection System
+### Work in Progress
+The LLM is just straight out of the Ollama repository. I am working to fine-tune it for this task. 
 
+# Checkbox Detection System
 A complete web application for detecting and analyzing checkboxes in document images using Ollama and the granite3.2-vision:2b model.
 
 ![alt text](image.png)
